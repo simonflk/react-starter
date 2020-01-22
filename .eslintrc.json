@@ -1,0 +1,29 @@
+{
+    "env": {
+        "browser": true,
+        "es2020": true,
+        "jest": true
+    },
+    "parserOptions": {
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "jsx": true
+        }
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended",
+        "plugin:import/errors",
+        "prettier"
+    ],
+    "settings": {
+        "react": {
+          "version": "16.12.0"
+        }
+     },
+    "plugins": [
+        "react",
+        "react-hooks",
+        "import"
+    ]
+}
