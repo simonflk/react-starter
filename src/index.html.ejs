@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
     <% if (Array.isArray(htmlWebpackPlugin.options.meta)) { %>
         <% for (item of htmlWebpackPlugin.options.meta) { %>
         <meta<% for (key in item) { %> <%= key %>="<%= item[key] %>"<% } %>>

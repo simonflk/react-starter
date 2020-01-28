@@ -3,28 +3,49 @@ const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlMultiWebpackPlugin = require('html-webpack-multi-build-plugin');
+const JSOutputFilePlugin = require('js-output-file-webpack-plugin');
+const BabelEnvDepsPlugin = require('webpack-babel-env-deps');
+const TerserPlugin = require('terser-webpack-plugin');
 const gitRev = require('git-rev-sync');
 
 const pkg = require('./package.json');
 
-exports.devServer = ({host, port} = {}) => ({
+exports.devServer = ({host, port, publicPath} = {}) => ({
     devServer: {
         host, // Defaults to `localhost`
         port, // Defaults to 8080
+        publicPath, // Defaults to `/`
         https: true,
         index: 'index.html',
         stats: 'errors-only',
+        openPage: publicPath.replace(/^\//, ''),
         overlay: {errors: true},
-        historyApiFallback: true,
+        historyApiFallback: {
+            rewrites: [
+                {from: new RegExp(`^(?!${publicPath})`), to: publicPath + '404.html'},
+                {from: /./, to: publicPath + `index.html`},
+            ],
+        },
     },
 });
 
-exports.babel = ({env} = {}) => ({
+exports.devFlags = () => {
+    return {
+        plugins: [
+            new webpack.DefinePlugin({
+                __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
+                __DEBUG__: JSON.stringify(['true', '1'].includes(process.env.NODE_DEBUG)),
+            }),
+        ],
+    };
+};
+
+exports.babel = ({env, transpileDeps} = {}) => ({
     module: {
         rules: [
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                exclude: [transpileDeps ? BabelEnvDepsPlugin.exclude() : /node_modules/],
                 use: {
                     loader: 'babel-loader',
                     options: {envName: env, cacheDirectory: true},
@@ -55,7 +76,7 @@ exports.loadCSS = ({include, exclude} = {}) => ({
 exports.extractedCSS = ({include, exclude} = {}) => {
     // Output extracted CSS to a file
     const plugin = new MiniCssExtractPlugin({
-        filename: '[name]-[contenthash].css',
+        filename: 'css/[name]-[contenthash].css',
     });
 
     return {
@@ -73,7 +94,7 @@ exports.extractedCSS = ({include, exclude} = {}) => {
     };
 };
 
-exports.html = ({title, favicon, template = 'src/index.html.ejs', meta = {}} = {}) => ({
+exports.html = ({title, favicon, template = 'index.html.ejs', meta = {}} = {}) => ({
     plugins: [
         new HtmlWebpackPlugin({
             title,
@@ -93,10 +114,49 @@ exports.attachVersion = () => {
     return {
         plugins: [
             new webpack.DefinePlugin({
-                __VERSION__: `"${pkg.version}"`,
-                __COMMITHASH__: `"${gitSha.substring(0, 8)}"`,
-                __BRANCH__: `"${gitBranch}"`,
+                __VERSION__: JSON.stringify(pkg.version),
+                __COMMITHASH__: JSON.stringify(gitSha.substring(0, 8)),
+                __BRANCH__: JSON.stringify(gitBranch),
             }),
         ],
+    };
+};
+
+exports.svgr = () => {
+    return {
+        module: {
+            rules: [
+                {
+                    test: /\.svg$/,
+                    use: ['@svgr/webpack'],
+                },
+            ],
+        },
+    };
+};
+
+exports.jsOutputFile = ({sourceFile, contextPath, outputFileName, ...rest} = {}) => {
+    return {
+        plugins: [new JSOutputFilePlugin({sourceFile, contextPath, outputFileName, ...rest})],
+    };
+};
+
+exports.minifyJs = () => {
+    return {
+        optimization: {
+            minimize: true,
+            minimizer: [
+                new TerserPlugin({sourceMap: true, terserOptions: {ecma: 8, safari10: true}}),
+            ],
+        },
+    };
+};
+
+exports.minifyJsLegacy = () => {
+    return {
+        optimization: {
+            minimize: true,
+            minimizer: [new TerserPlugin({sourceMap: true})],
+        },
     };
 };

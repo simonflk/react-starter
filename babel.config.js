@@ -1,16 +1,13 @@
 /* eslint-env node */
+const commonPlugins = [
+    '@babel/plugin-proposal-nullish-coalescing-operator',
+    '@babel/plugin-proposal-optional-chaining',
+];
 module.exports = {
     env: {
         modern: {
             presets: [
-                [
-                    '@babel/preset-env',
-                    {
-                        modules: false,
-                        useBuiltIns: false,
-                        targets: {esmodules: true},
-                    },
-                ],
+                '@babel/preset-modules',
                 [
                     '@babel/preset-react',
                     {
@@ -19,7 +16,7 @@ module.exports = {
                     },
                 ],
             ],
-            plugins: [],
+            plugins: [...commonPlugins],
         },
         legacy: {
             presets: [
@@ -34,7 +31,7 @@ module.exports = {
                 ],
                 ['@babel/preset-react', {development: process.env.NODE_ENV !== 'production'}],
             ],
-            plugins: [],
+            plugins: [...commonPlugins],
         },
     },
 };

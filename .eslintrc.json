@@ -4,6 +4,7 @@
         "es2020": true,
         "jest": true
     },
+    "parser": "babel-eslint",
     "parserOptions": {
         "sourceType": "module",
         "ecmaFeatures": {
@@ -29,6 +30,11 @@
     "globals": {
         "__VERSION__": "readonly",
         "__COMMITHASH__": "readonly",
-        "__BRANCH__": "readonly"
+        "__BRANCH__": "readonly",
+        "__DEV__": "readonly",
+        "__DEBUG__": "readonly"
+    },
+    "rules": {
+        "no-console": ["warn", {"allow": ["warn", "error"]}]
     }
 }

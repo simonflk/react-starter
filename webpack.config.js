@@ -5,42 +5,47 @@ const merge = require('webpack-merge');
 const parts = require('./webpack.parts');
 
 const port = process.env.PORT || '9000';
+const publicPath = process.env.PUBLIC_PATH || '/';
 
-const commonConfig = merge(
+const baseConfig = merge(
     {
         mode: 'development',
         devtool: 'eval-source-map',
+        context: path.join(__dirname, 'src'),
         entry: {
-            main: sourcePath('index.js'),
+            main: './index.js',
         },
         output: {
-            filename: '[name].js',
+            publicPath,
             path: distPath(),
-            publicPath: '/',
+            filename: 'js/[name].js',
         },
     },
-    parts.babel({env: 'modern'}),
+    parts.svgr(),
     parts.html({title: 'My application!'}),
+    parts.jsOutputFile({contextPath: __dirname, sourceFile: 'env.js', outputFileName: 'js/env.js'}),
     parts.attachVersion(),
 );
+
+const developmentConfig = merge(parts.devServer({port, publicPath}), parts.loadCSS());
+
+const modernConfig = parts.babel({env: 'modern'});
 
 const legacyConfig = merge(
     {
         entry: {
-            legacy: ['core-js/stable', 'regenerator-runtime/runtime', sourcePath('index.js')],
+            legacy: ['core-js/stable', 'regenerator-runtime/runtime', './index.js'],
         },
     },
-    parts.babel({env: 'legacy'}),
+    parts.babel({env: 'legacy', transpileDeps: true}),
 );
-
-const developmentConfig = merge(parts.devServer({port}), parts.loadCSS());
 
 const productionConfig = merge(
     {
         mode: 'production',
         devtool: 'source-maps',
         output: {
-            filename: '[name]-[chunkhash].js',
+            filename: 'js/[name]-[chunkhash].js',
         },
         optimization: {
             splitChunks: {
@@ -48,31 +53,35 @@ const productionConfig = merge(
             },
         },
     },
-    parts.extractedCSS(),
+    parts.extractCSS(),
 );
+
+const modernProductionConfig = parts.minifyJs();
+
+const legacyProductionConfig = parts.minifyJsLegacy();
 
 module.exports = (env = {}) => {
     process.env.NODE_ENV = process.env.NODE_ENV || env.production ? 'production' : 'development';
 
-    // Custom merger to explicitly pick (and not merge) legacy `entry`
-    const mergeLegacy = merge({
-        customizeObject(prev, next, key) {
-            if (key === 'entry') {
-                return next;
-            }
-        },
-    });
+    // Legacy entry should replace (not append)
+    const mergeLegacy = merge.smartStrategy({entry: 'replace'});
 
-    const main = merge(commonConfig, env.production ? productionConfig : developmentConfig);
-    const legacy = mergeLegacy(main, legacyConfig);
+    const main = merge.smart(
+        baseConfig,
+        modernConfig,
+        parts.devFlags(),
+        env.production ? merge(productionConfig, modernProductionConfig) : developmentConfig,
+    );
+    const legacy = mergeLegacy(
+        baseConfig,
+        legacyConfig,
+        parts.devFlags(),
+        env.production ? merge(productionConfig, legacyProductionConfig) : developmentConfig,
+    );
 
     // Return 2 webpack configs
     return [main, legacy];
 };
-
-function sourcePath(...pathParts) {
-    return path.resolve(__dirname, 'src', ...pathParts);
-}
 
 function distPath(...pathParts) {
     return path.resolve(__dirname, 'dist', ...pathParts);
