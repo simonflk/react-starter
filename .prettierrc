@@ -13,6 +13,12 @@
                 "trailingComma": "none",
                 "proseWrap": "never"
             }
+        },
+        {
+            "files": "*.{htm,html}",
+            "options": {
+                "tabWidth": 2
+            }
         }
     ]
 }

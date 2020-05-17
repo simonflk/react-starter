@@ -94,7 +94,7 @@ exports.extractedCSS = ({include, exclude} = {}) => {
     };
 };
 
-exports.html = ({title, favicon, template = 'index.html.ejs', meta = {}} = {}) => ({
+exports.html = ({title, favicon, template = 'index.html.ejs', meta = {}, ...rest} = {}) => ({
     plugins: [
         new HtmlWebpackPlugin({
             title,
@@ -102,6 +102,7 @@ exports.html = ({title, favicon, template = 'index.html.ejs', meta = {}} = {}) =
             meta,
             template,
             inject: false,
+            ...rest,
         }),
         new HtmlMultiWebpackPlugin(),
     ],

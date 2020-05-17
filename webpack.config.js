@@ -1,4 +1,5 @@
 /* eslint-env node */
+require('dotenv').config();
 const path = require('path');
 const merge = require('webpack-merge');
 
@@ -29,7 +30,7 @@ const baseConfig = merge(
 
 const developmentConfig = merge(parts.devServer({port, publicPath}), parts.loadCSS());
 
-const modernConfig = parts.babel({env: 'modern'});
+const modernConfig = parts.babel({env: 'modern', transpileDeps: true});
 
 const legacyConfig = merge(
     {

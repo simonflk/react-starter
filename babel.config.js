@@ -7,7 +7,17 @@ module.exports = {
     env: {
         modern: {
             presets: [
-                '@babel/preset-modules',
+                [
+                    '@babel/preset-env',
+                    {
+                        corejs: 3,
+                        modules: false,
+                        bugfixes: true,
+                        useBuiltIns: 'entry',
+                        loose: false,
+                        targets: {esmodules: true},
+                    },
+                ],
                 [
                     '@babel/preset-react',
                     {
